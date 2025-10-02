@@ -39,3 +39,7 @@
 
 # debug information files
 *.dwo
+
+# Local editor and build artifacts
+.vscode/
+/main

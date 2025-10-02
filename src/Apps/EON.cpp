@@ -25,13 +25,13 @@ bool EON::isRunning() const {
 }
 
 int EON::channelToAlt(Channels ch) {
-	// Map SVT channels to some internal code (placeholder)
-	switch (ch) {
-		case Channels::SVT1: return 1;
-		case Channels::SVT2: return 2;
-		case Channels::SVT24: return 5;
-		default: return -1;
-	}
+    // Map SVT channels to some internal code (placeholder)
+    switch (ch) {
+        case Channels::SVT1: return 1;
+        case Channels::SVT2: return 2;
+        case Channels::SVT24: return 5;
+        default: return -1;
+    }
 }
 
 void EON::setChannel(Channels ch) {

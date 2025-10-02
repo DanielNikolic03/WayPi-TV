@@ -8,36 +8,36 @@ SVT::~SVT() {
 
 void SVT::start() {
     system("adb shell am start -n se.svt.android.svtplay/se.svt.svtplay.ui.tv.profile.ProfilePickerActivity && sleep 3");
-	running = true;
+    running = true;
 
-	// Navigate to live stream SVT1
-	system("adb shell input keyevent KEYCODE_DPAD_UP && sleep 1");
-	system("adb shell input keyevent KEYCODE_DPAD_CENTER && sleep 5");
-	system("adb shell input keyevent KEYCODE_DPAD_LEFT && sleep 1");
-	system("adb shell input keyevent KEYCODE_DPAD_DOWN && sleep 1");
-	system("adb shell input keyevent KEYCODE_DPAD_DOWN && sleep 1");
-	system("adb shell input keyevent KEYCODE_DPAD_DOWN && sleep 1");
-	system("adb shell input keyevent KEYCODE_DPAD_CENTER && sleep 5");
+    // Navigate to live stream SVT1
+    system("adb shell input keyevent KEYCODE_DPAD_UP && sleep 1");
+    system("adb shell input keyevent KEYCODE_DPAD_CENTER && sleep 5");
+    system("adb shell input keyevent KEYCODE_DPAD_LEFT && sleep 1");
+    system("adb shell input keyevent KEYCODE_DPAD_DOWN && sleep 1");
+    system("adb shell input keyevent KEYCODE_DPAD_DOWN && sleep 1");
+    system("adb shell input keyevent KEYCODE_DPAD_DOWN && sleep 1");
+    system("adb shell input keyevent KEYCODE_DPAD_CENTER && sleep 5");
 }
 
-void SVT::stop() { 
+void SVT::stop() {
     int rc = system("adb shell am force-stop se.svt.android.svtplay");
     (void)rc;
     running = false;
 }
 
-bool SVT::isRunning() const { 
-    return running; 
+bool SVT::isRunning() const {
+    return running;
 }
 
 int SVT::channelToAlt(Channels ch) {
-	// Map SVT channels to some internal code (placeholder)
-	switch (ch) {
-		case Channels::SVT1: return 1;
-		case Channels::SVT2: return 2;
-		case Channels::SVT24: return 5;
-		default: return -1;
-	}
+    // Map SVT channels to some internal code (placeholder)
+    switch (ch) {
+        case Channels::SVT1: return 1;
+        case Channels::SVT2: return 2;
+        case Channels::SVT24: return 5;
+        default: return -1;
+    }
 }
 
 void SVT::setChannel(Channels ch) {
@@ -72,5 +72,5 @@ void SVT::setChannel(Channels ch) {
 }
 
 Channels SVT::getChannel() const {
-	return currentChannel;
+    return currentChannel;
 }

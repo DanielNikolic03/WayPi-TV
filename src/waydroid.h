@@ -17,8 +17,8 @@
 
 #include "channels.h"
 #include "App.h"
-#include "SVT.h"
-#include "EON.h"
+#include "Apps/SVT.h"
+#include "Apps/EON.h"
 
 class Waydroid {
 private:

@@ -182,7 +182,7 @@ int main() {
             cout << kv.first;
             first = false;
         }
-    cout << ", 'm' for manual, 's' for HDMI status, or 'q' to quit." << endl;
+        cout << ", 'm' for manual, 's' for HDMI status, or 'q' to quit." << endl;
         
         // Clear rest of the line if any leftover
         if (cin.peek() == '\n') cin.get();
@@ -190,4 +190,3 @@ int main() {
 
     return 0;
 }
-

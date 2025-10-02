@@ -1,14 +1,14 @@
-#ifndef SVT_H
-#define SVT_H
+#ifndef EON_H
+#define EON_H
 
 #include <cstdlib>
 #include <unistd.h>
 #include <iostream>
 
-#include "App.h"
-#include "channels.h"
+#include "../App.h"
+#include "../channels.h"
 
-class SVT : public App {
+class EON : public App {
 private:
     Channels currentChannel{Channels::SVT1};
     bool running{false};
@@ -16,8 +16,8 @@ private:
     int channelToAlt(Channels ch);
 
 public:
-    SVT();
-    ~SVT();
+    EON();
+    ~EON();
 
     void start();
     void stop();
