@@ -42,4 +42,4 @@
 
 # Local editor and build artifacts
 .vscode/
-/main
+main
