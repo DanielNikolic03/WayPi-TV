@@ -14,6 +14,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <cstdio>
+#include <sys/types.h> // pid_t
 
 #include "channels.h"
 #include "App.h"
@@ -55,6 +56,11 @@ public:
     const std::string& getSessionStatus() const { return sessionStatus; }
     const std::string& getContainerStatus() const { return containerStatus; }
     const std::string& getIpAddress() const { return ipAddress; }
+
+private:
+    pid_t uiPid = -1;
+
+    bool showUI();   // open the UI window (full UI)
 };
 
 #endif

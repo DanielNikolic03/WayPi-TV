@@ -3,6 +3,10 @@
 #include <sys/time.h>
 // unistd.h likely already included through headers for usleep/STDIN_FILENO, but include explicitly for clarity
 #include <unistd.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <cstdio>
+#include <cstdlib>
 
 Waydroid::Waydroid() {
     parseStatus();
@@ -27,6 +31,7 @@ std::string Waydroid::executeCommand(const std::string& command) {
     
     return result;
 }
+
 
 std::string Waydroid::trim(const std::string& str) {
     // Include all whitespace characters: space, tab, newline, carriage return, form feed, vertical tab
@@ -89,34 +94,30 @@ void Waydroid::parseStatus() {
 /// @return true if already running, false if started successfully
 bool Waydroid::start() {
     if (isRunning() && isConnectedAdb()) {
+        std::cout << "Already running" << std::endl;
         return true;
     }
 
-    // Start Waydroid
     if (!isRunning()) {
-        // Start waydroid session in background using nohup to detach it properly
         int result = system("nohup waydroid session start > /dev/null 2>&1 &");
-        
         if (result == 0) {
-            // Wait a moment for the session to initialize
-            system("sleep 10");
+            system("sleep 5");
             std::cout << "Waydroid session start command issued..." << std::endl;
-            
-            // Also start the waydroid app/emulator GUI
-            std::cout << "Starting Waydroid app..." << std::endl;
-            system("nohup waydroid show-full-ui > /dev/null 2>&1 &");
-            system("sleep 10");
+
+            // Open the UI window (separate from the session)
+            std::cout << "Starting Waydroid UI..." << std::endl;
+            showUI();
+            system("sleep 8");
         } else {
             std::cerr << "Failed to start waydroid session" << std::endl;
         }
-        parseStatus();  // Re-parse status after attempting to start
+        parseStatus();
     }
 
-    // Start Adb
     if (!isConnectedAdb()) {
+        std::cout << "Connecting ADB" << std::endl;
         connectAdb();
     }
-    
     return false;
 }
 
@@ -126,6 +127,8 @@ bool Waydroid::stop() {
     if (!isRunning() && !isConnectedAdb()) {
         return true;
     }
+
+    runningApp.release();
 
     // Stop Adb
     if (isConnectedAdb()) {
@@ -182,6 +185,11 @@ bool Waydroid::isConnectedAdb() {
 }
 
 void Waydroid::setChannel(Channels ch) {
+    if (!isConnectedAdb() && !isRunning()) {
+        std::cerr << "Could not set channel, Waydroid not running or adb not connected" << std::endl;
+        return;
+    }
+
     // Decide which app should own this channel
     auto appId = ChannelUtil::appFor(ch);
 
@@ -289,4 +297,26 @@ void Waydroid::handleKeyboardInput() {
     
     // Restore original terminal settings
     tcsetattr(STDIN_FILENO, TCSANOW, &old_tio);
+}
+
+bool Waydroid::showUI() {
+    // If we already have a UI pid and it's alive, do nothing
+    if (uiPid > 0 && kill(uiPid, 0) == 0) return true;
+
+    // Launch and capture PID using a shell
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(
+        "sh -c 'nohup waydroid show-full-ui >/dev/null 2>&1 & echo $!'", "r"), pclose);
+    if (!pipe) return false;
+
+    std::cout << "UI start command issued" << std::endl;
+
+    char buf[64] = {0};
+    if (!fgets(buf, sizeof(buf), pipe.get())) return false;
+
+    uiPid = static_cast<pid_t>(strtol(buf, nullptr, 10));
+    if (uiPid <= 0) {
+        // Fallback: leave unknown pid but still consider UI requested
+        uiPid = -1;
+    }
+    return true;
 }

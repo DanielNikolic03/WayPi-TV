@@ -4,6 +4,7 @@
 enum class Channels {
     SVT1,
     SVT2,
+    KUNSKAPSKANALEN,
     SVT24,
     
 };
@@ -16,6 +17,7 @@ namespace ChannelUtil {
         switch (ch) {
             case Channels::SVT1:
             case Channels::SVT2:
+            case Channels::KUNSKAPSKANALEN:
             case Channels::SVT24:
                 return true;
             default:

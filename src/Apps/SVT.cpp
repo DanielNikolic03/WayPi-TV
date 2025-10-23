@@ -1,4 +1,5 @@
 #include "SVT.h"
+#include <unistd.h>
 
 SVT::SVT() = default;
 
@@ -7,11 +8,14 @@ SVT::~SVT() {
 }
 
 void SVT::start() {
-    system("adb shell am start -n se.svt.android.svtplay/se.svt.svtplay.ui.tv.profile.ProfilePickerActivity && sleep 3");
+    // Launch using host waydroid CLI (as requested)
+    system("waydroid app launch se.svt.android.svtplay");
+    system("waydroid app launch se.svt.android.svtplay");
+    sleep(3);
     running = true;
 
     // Navigate to live stream SVT1
-    system("adb shell input keyevent KEYCODE_DPAD_UP && sleep 1");
+    system("adb shell input keyevent KEYCODE_DPAD_LEFT && sleep 1");
     system("adb shell input keyevent KEYCODE_DPAD_CENTER && sleep 5");
     system("adb shell input keyevent KEYCODE_DPAD_LEFT && sleep 1");
     system("adb shell input keyevent KEYCODE_DPAD_DOWN && sleep 1");
@@ -35,6 +39,7 @@ int SVT::channelToAlt(Channels ch) {
     switch (ch) {
         case Channels::SVT1: return 1;
         case Channels::SVT2: return 2;
+        case Channels::KUNSKAPSKANALEN: return 4;
         case Channels::SVT24: return 5;
         default: return -1;
     }

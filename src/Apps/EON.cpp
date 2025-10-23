@@ -1,4 +1,5 @@
 #include "EON.h"
+#include <unistd.h>
 
 EON::EON() = default;
 
@@ -7,11 +8,9 @@ EON::~EON() {
 }
 
 void EON::start() {
-    system("adb shell am start -n com.ug.eon.android.tv/.TvActivity");
+    // Launch using host waydroid CLI (as requested)
+    system("waydroid app launch com.ug.eon.android.tv");
     running = true;
-
-    // Navigate
-
 }
 
 void EON::stop() {
