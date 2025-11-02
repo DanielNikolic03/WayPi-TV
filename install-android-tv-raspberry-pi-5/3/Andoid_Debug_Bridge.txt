@@ -1,0 +1,18 @@
+1. Install tool
+run "sudo apt install android-tools-adb"
+
+2. Connect to waydroid
+go into waydroid > settings > network and find the IP
+
+connect with "adb connect <IP>:5555"
+disconnect with "adb disconnect <IP>:5555"
+
+3. Useful Google TV commands
+adb shell input keyevent KEYCODE_DPAD_UP
+adb shell input keyevent KEYCODE_DPAD_DOWN
+adb shell input keyevent KEYCODE_DPAD_LEFT
+adb shell input keyevent KEYCODE_DPAD_RIGHT
+adb shell input keyevent KEYCODE_DPAD_CENTER
+
+adb shell input keyevent KEYCODE_BACK
+adb shell input keyevent KEYCODE_HOME

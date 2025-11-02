@@ -1,0 +1,15 @@
+1. Stop waydroid
+"waydroid session stop"
+
+2. uninstall waydroid
+"sudo apt remove --purge waydroid -y"
+
+3. Delete leftover data
+"sudo rm -rf ~/.local/share/waydroid"
+"sudo rm -rf /var/lib/waydroid"
+"sudo rm -rf /etc/waydroid-extra"
+"rm -f ~/.local/share/applications/waydroid.*"
+"sudo rm -f /usr/share/applications/waydroid.*"
+
+4. Retry
+Retry steps in installation guide document.

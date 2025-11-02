@@ -1,0 +1,39 @@
+1. Install curl (and certificates)
+run "sudo apt install curl ca-certificates -y"
+
+2. Curl Waydroid repo
+curl https://repo.waydro.id | sudo bash
+
+3. Update package list and install waydroid
+sudo apt update && sudo apt install waydroid -y
+
+4. Download the Android TV build form github (ARM release)
+https://github.com/supechicken/waydroid-androidtv-build
+or
+Look in downloads.
+
+5. Move image
+After extracting and CD into the extracted folder
+run "sudo mkdir -p /etc/waydroid-extra/images/" or create path manually
+then run "sudo cp system.img /etc/waydroid-extra/images/system.img"
+and "sudo cp vendor.img /etc/waydroid-extra/images/vendor.img"
+
+6. Initialize Waydroid:
+run "sudo waydroid init -f"
+
+7. (disable clunky fullscreen)
+run "waydroid prop set persist.waydroid.multi_windows true"
+
+8. Register device to google
+Google apps cannot be used or logged in to without registering first.
+
+run "sudo waydroid shell"
+then "ANDROID_RUNTIME_ROOT=/apex/com.android.runtime ANDROID_DATA=/data ANDROID_TZDATA_ROOT=/apex/com.android.tzdata ANDROID_I18N_ROOT=/apex/com.android.i18n sqlite3 /data/data/com.google.android.gsf/databases/gservices.db "select * from main where name = \"android_id\";""
+copy the numbers after the pipe.
+
+Navigate to "https://www.google.com/android/uncertified"
+and register the device.
+
+restart the container with
+"waydroid session stop"
+"waydroid session start".

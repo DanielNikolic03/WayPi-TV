@@ -1,0 +1,12 @@
+1. Check page size: 
+If runnin "getconf PAGESIZE" says 16384 the page size is incorrect.
+
+2. Change kernel version:
+run "sudo nano /boot/firmware/config.txt" and add the line "kernel=kernel8.img"
+at the top to override the default kernel configuration. Run "sudo reboot".
+
+3. Verify:
+run "getconf PAGESIZE" and verify it says 4096.
+
+Taken from:
+(https://pimylifeup.com/raspberry-pi-page-size/)
