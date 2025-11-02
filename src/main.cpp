@@ -23,7 +23,13 @@ std::map<int, Channels> channelMap = {
     {1, Channels::SVT1},
     {2, Channels::SVT2},
     {3, Channels::KUNSKAPSKANALEN},
-    {4, Channels::SVT24}
+    {4, Channels::SVT24},
+    {5, Channels::EON_BN_MUZIKA},
+    {6, Channels::EON_BN},
+    {7, Channels::EON_HAPPY},
+    {8, Channels::EON_PRVA},
+    {9, Channels::EON_PINK},
+    {0, Channels::EON_RTS_1}
 };
 
 // Helpers for evdev key bitmask
@@ -408,7 +414,7 @@ void handleKeyboardInput(unique_ptr<Waydroid>& w, const vector<string>& devicePa
 
 int main() {
     unique_ptr<Waydroid> w = make_unique<Waydroid>();
-    
+
     // Find the keyboard devices
     vector<string> keyboardDevices = findKeyboardDevices();
     if (keyboardDevices.empty()) {

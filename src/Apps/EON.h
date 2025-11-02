@@ -10,7 +10,7 @@
 
 class EON : public App {
 private:
-    Channels currentChannel{Channels::SVT1};
+    Channels currentChannel{Channels::EON_RTS_1};
     bool running{false};
 
     int channelToAlt(Channels ch);

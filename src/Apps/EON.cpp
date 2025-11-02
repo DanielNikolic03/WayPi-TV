@@ -10,7 +10,20 @@ EON::~EON() {
 void EON::start() {
     // Launch using host waydroid CLI (as requested)
     system("waydroid app launch com.ug.eon.android.tv");
+    system("waydroid app launch com.ug.eon.android.tv");
+    sleep(7);
     running = true;
+
+    // Navigate to live stream channel 1
+    std::cout << "EON: Navigating to live TV channel 1" << std::endl;
+    system("adb shell input keyevent KEYCODE_DPAD_CENTER && sleep 3");
+    system("adb shell input keyevent KEYCODE_DPAD_DOWN && sleep 2");
+    system("adb shell input keyevent KEYCODE_DPAD_CENTER && sleep 1");
+    system("adb shell input keyevent KEYCODE_DPAD_CENTER && sleep 1");
+    system("adb shell input keyevent KEYCODE_DPAD_CENTER && sleep 1");
+    system("adb shell input keyevent KEYCODE_DPAD_DOWN && sleep 1");
+    system("adb shell input keyevent KEYCODE_DPAD_CENTER && sleep 1");
+    system("adb shell input keyevent KEYCODE_BACK && sleep 1");
 }
 
 void EON::stop() {
@@ -24,11 +37,14 @@ bool EON::isRunning() const {
 }
 
 int EON::channelToAlt(Channels ch) {
-    // Map SVT channels to some internal code (placeholder)
     switch (ch) {
-        case Channels::SVT1: return 1;
-        case Channels::SVT2: return 2;
-        case Channels::SVT24: return 5;
+        case Channels::EON_RTS_1: return 1;
+        case Channels::EON_PINK: return 3;
+        case Channels::EON_PRVA: return 4;
+        case Channels::EON_HAPPY: return 5;
+        case Channels::EON_BN: return 200;
+        case Channels::EON_BN_MUZIKA: return 223; // 277 in EON app listing
+        case Channels::EON_NATURE: return 335;
         default: return -1;
     }
 }
@@ -47,11 +63,13 @@ void EON::setChannel(Channels ch) {
     }
 
     int delta = target - current;
+    std::cout << "Changing channel from " << current << " to " << target << " (delta " << delta << ")\n";
     if (delta == 0) {
         std::cout << "Already on target channel\n";
         return;
     }
 
+    system("adb shell input keyevent KEYCODE_BACK && sleep 1");
     for (int i = 0; i < std::abs(delta); ++i) {
         if (delta > 0) {
             system("adb shell input keyevent KEYCODE_DPAD_DOWN && sleep 0.5");
@@ -59,7 +77,7 @@ void EON::setChannel(Channels ch) {
             system("adb shell input keyevent KEYCODE_DPAD_UP && sleep 0.5");
         }
     }
-    system("adb shell input keyevent KEYCODE_DPAD_CENTER && sleep 1");
+    system("adb shell input keyevent KEYCODE_DPAD_CENTER && sleep 10");
 
     currentChannel = ch;
 }
