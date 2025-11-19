@@ -11,7 +11,7 @@ void EON::start() {
     // Launch using host waydroid CLI (as requested)
     system("waydroid app launch com.ug.eon.android.tv");
     system("waydroid app launch com.ug.eon.android.tv");
-    sleep(7);
+    sleep(9);
     running = true;
 
     // Navigate to live stream channel 1
@@ -38,12 +38,13 @@ bool EON::isRunning() const {
 
 int EON::channelToAlt(Channels ch) {
     switch (ch) {
+        // EON app listing uses inconsistent numbering, so these numbers are not displayed
         case Channels::EON_RTS_1: return 1;
         case Channels::EON_PINK: return 3;
         case Channels::EON_PRVA: return 4;
         case Channels::EON_HAPPY: return 5;
-        case Channels::EON_BN: return 200;
-        case Channels::EON_BN_MUZIKA: return 223; // 277 in EON app listing
+        case Channels::EON_BN: return 199;
+        case Channels::EON_BN_MUZIKA: return 222;
         case Channels::EON_NATURE: return 335;
         default: return -1;
     }

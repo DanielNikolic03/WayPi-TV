@@ -51,168 +51,24 @@ static bool deviceSupportsAnyKeys(int fd, const std::vector<int>& keys) {
     return false;
 }
 
-// Function to find keyboard devices with keypad capability preference
+// Simplified device discovery: return all /dev/input/event* paths
 vector<string> findKeyboardDevices() {
     DIR* dir = opendir("/dev/input");
     if (!dir) {
         cerr << "Cannot open /dev/input" << endl;
         return {};
     }
-    
+
     struct dirent* entry;
     vector<string> devices;
-    string fallback;
-    
+
     while ((entry = readdir(dir)) != nullptr) {
         if (strncmp(entry->d_name, "event", 5) == 0) {
-            string path = string("/dev/input/") + entry->d_name;
-            int fd = open(path.c_str(), O_RDONLY);
-            if (fd < 0) continue;
-            
-            char name[256] = "Unknown";
-            ioctl(fd, EVIOCGNAME(sizeof(name)), name);
-            
-            // Look for keyboard-like devices
-            string deviceName = name;
-            transform(deviceName.begin(), deviceName.end(), deviceName.begin(), ::tolower);
-            
-            if (deviceName.find("keyboard") != string::npos || 
-                deviceName.find("at translated") != string::npos) {
-                // Prefer devices that actually expose keypad keys or KP Enter
-                bool hasKeypad = deviceSupportsAnyKeys(fd, {
-                    KEY_KP1, KEY_KP2, KEY_KP3, KEY_KP4, KEY_KP5,
-                    KEY_KP6, KEY_KP7, KEY_KP8, KEY_KP9, KEY_KP0,
-                    KEY_KPENTER, KEY_KPMINUS, KEY_KPPLUS
-                });
-                if (hasKeypad) {
-                    cout << "Keyboard device: " << name << " at " << path << endl;
-                    devices.push_back(path);
-                } else if (fallback.empty()) {
-                    // keep first keyboard-like device as fallback
-                    fallback = path;
-                }
-            }
-            close(fd);
+            devices.push_back(string("/dev/input/") + entry->d_name);
         }
     }
     closedir(dir);
-    if (devices.empty() && !fallback.empty()) {
-        devices.push_back(fallback);
-    }
     return devices;
-}
-
-// Function to unbind keyboard from kernel
-bool unbindKeyboard(const string& devicePath) {
-    // Extract event number from path (e.g., /dev/input/event3 -> event3)
-    size_t lastSlash = devicePath.find_last_of('/');
-    if (lastSlash == string::npos) return false;
-
-    string eventName = devicePath.substr(lastSlash + 1);
-
-    // Resolve the sysfs device backing this event node
-    string deviceSyspath = "/sys/class/input/" + eventName + "/device";
-    char realPath[PATH_MAX] = {0};
-    if (realpath(deviceSyspath.c_str(), realPath) == nullptr) {
-        cerr << "Cannot resolve sysfs path for " << deviceSyspath << endl;
-        return false;
-    }
-    string resolvedPath = realPath;
-
-    // Helper lambdas
-    auto basenameOf = [](const string& p) {
-        size_t pos = p.find_last_of('/');
-        return (pos == string::npos) ? p : p.substr(pos + 1);
-    };
-    auto readLink = [](const string& p) -> string {
-        char buf[PATH_MAX];
-        ssize_t len = readlink(p.c_str(), buf, sizeof(buf) - 1);
-        if (len == -1) return "";
-        buf[len] = '\0';
-        return string(buf);
-    };
-    auto exists = [](const string& p) -> bool {
-        struct stat st{};
-        return lstat(p.c_str(), &st) == 0;
-    };
-
-    cout << "Sysfs path for device: " << resolvedPath << endl;
-
-    // 1) Try PS/2 (atkbd via serio) path first
-    if (resolvedPath.find("/serio") != string::npos) {
-        size_t serioPos = resolvedPath.find("serio");
-        string serioName = resolvedPath.substr(serioPos);
-        size_t slashPos = serioName.find('/');
-        if (slashPos != string::npos) serioName = serioName.substr(0, slashPos);
-
-        string unbindPath = "/sys/bus/serio/drivers/atkbd/unbind";
-        ofstream f(unbindPath);
-        if (!f) {
-            cerr << "Failed to open " << unbindPath << " (need root?)" << endl;
-        } else {
-            cout << "Unbinding PS/2 device: " << serioName << endl;
-            f << serioName;
-            f.close();
-            cout << "Unbound via atkbd." << endl;
-            return true;
-        }
-    }
-
-    // 2) Try HID device (hid-generic or vendor HID driver) in /sys/bus/hid/drivers
-    // Walk up from resolvedPath to find a node that has a 'driver' symlink pointing to hid driver
-    {
-        string cur = resolvedPath;
-        for (int i = 0; i < 10 && !cur.empty(); ++i) { // limit ascent depth
-            string driverLink = cur + "/driver";
-            if (exists(driverLink)) {
-                string target = readLink(driverLink);
-                // The driver name is the last component of the target path
-                string driverName = basenameOf(target);
-                string nodeName = basenameOf(cur); // e.g., 0003:VID:PID.xxxx
-
-                // If this is a HID driver, try unbinding there
-                if (driverName.find("hid") != string::npos) {
-                    string unbindPath = string("/sys/bus/hid/drivers/") + driverName + "/unbind";
-                    ofstream f(unbindPath);
-                    if (f) {
-                        cout << "Unbinding HID device (" << nodeName << ") from driver '" << driverName << "'" << endl;
-                        f << nodeName;
-                        f.close();
-                        cout << "Unbound via HID driver." << endl;
-                        return true;
-                    } else {
-                        cerr << "Failed to open " << unbindPath << " (need root?)" << endl;
-                    }
-                }
-
-                // If this is a USB driver (usbhid), unbind using interface id
-                if (driverName == "usbhid") {
-                    // For USB interface, the directory name is like '1-2:1.0'
-                    string ifaceId = basenameOf(cur);
-                    string unbindPath = "/sys/bus/usb/drivers/usbhid/unbind";
-                    ofstream f(unbindPath);
-                    if (f) {
-                        cout << "Unbinding USB HID interface " << ifaceId << " from usbhid" << endl;
-                        f << ifaceId;
-                        f.close();
-                        cout << "Unbound via usbhid." << endl;
-                        return true;
-                    } else {
-                        cerr << "Failed to open " << unbindPath << " (need root?)" << endl;
-                    }
-                }
-            }
-
-            // ascend
-            size_t slash = cur.find_last_of('/');
-            if (slash == string::npos) break;
-            cur = cur.substr(0, slash);
-        }
-    }
-
-    cerr << "Could not determine how to unbind this device automatically."
-         << " Falling back to EVIOCGRAB only (kernel may still see keys)." << endl;
-    return false;
 }
 
 // Function to handle keyboard input from multiple devices
@@ -414,8 +270,8 @@ void handleKeyboardInput(unique_ptr<Waydroid>& w, const vector<string>& devicePa
 
 int main() {
     unique_ptr<Waydroid> w = make_unique<Waydroid>();
-
-    // Find the keyboard devices
+    
+    // Find the keyboard devices (simplified: list event devices)
     vector<string> keyboardDevices = findKeyboardDevices();
     if (keyboardDevices.empty()) {
         cerr << "No keyboard device found!" << endl;

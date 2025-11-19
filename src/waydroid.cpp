@@ -156,7 +156,7 @@ bool Waydroid::isRunning() {
 
 void Waydroid::connectAdb() {
     if (!ipAddress.empty() && ipAddress != "UNKNOWN") {
-        std::string adbCommand = "adb connect " + ipAddress + ":5555";
+        std::string adbCommand = "adb connect " + ipAddress + ":5555";  // IP is typically 192.168.240.112
         int adbResult = system(adbCommand.c_str());
         
         if (adbResult == 0) 
