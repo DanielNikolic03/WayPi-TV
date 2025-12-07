@@ -6,18 +6,17 @@ enum class Channels {
     SVT2,
     KUNSKAPSKANALEN,
     SVT24,
-    EON_RTS_1,
-    EON_PINK,
-    EON_PRVA,
-    EON_HAPPY,
-    EON_BN,
-    EON_BN_MUZIKA,
-    EON_NATURE
+    MOVE_RTS_1,
+    MOVE_PINK,
+    MOVE_PRVA,
+    MOVE_HAPPY,
+    MOVE_BN,
+    MOVE_BN_MUZIKA
 };
 
 // Utilities to classify channels and map to owning app
 namespace ChannelUtil {
-    enum class AppId { SVT, EON, Unknown };
+    enum class AppId { SVT, MOVE, Unknown };
 
     inline constexpr bool isSVT(Channels ch) {
         switch (ch) {
@@ -31,15 +30,14 @@ namespace ChannelUtil {
         }
     }
 
-    inline constexpr bool isEON(Channels ch) {
+    inline constexpr bool isMOVE(Channels ch) {
         switch (ch) {
-            case Channels::EON_RTS_1:
-            case Channels::EON_PINK:
-            case Channels::EON_PRVA:
-            case Channels::EON_HAPPY:
-            case Channels::EON_BN:
-            case Channels::EON_BN_MUZIKA:
-            case Channels::EON_NATURE:
+            case Channels::MOVE_RTS_1:
+            case Channels::MOVE_PINK:
+            case Channels::MOVE_PRVA:
+            case Channels::MOVE_HAPPY:
+            case Channels::MOVE_BN:
+            case Channels::MOVE_BN_MUZIKA:
                 return true;
             default:
                 return false;
@@ -47,7 +45,7 @@ namespace ChannelUtil {
     }
 
     inline constexpr AppId appFor(Channels ch) {
-        return isSVT(ch) ? AppId::SVT : (isEON(ch) ? AppId::EON : AppId::Unknown);
+        return isSVT(ch) ? AppId::SVT : (isMOVE(ch) ? AppId::MOVE : AppId::Unknown);
     }
 }
 
