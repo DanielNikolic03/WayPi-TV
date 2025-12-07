@@ -12,10 +12,13 @@
 #include <linux/input.h>
 #include <dirent.h>
 #include <cstring>
+#include <cctype>
 #include <fstream>
 #include <limits.h>
 #include <sys/stat.h>
 #include <poll.h>
+#include <thread>
+#include <atomic>
 
 using namespace std;
 
@@ -31,25 +34,6 @@ std::map<int, Channels> channelMap = {
     {9, Channels::EON_PINK},
     {0, Channels::EON_RTS_1}
 };
-
-// Helpers for evdev key bitmask
-static inline bool test_bit(size_t bit, const unsigned long* array) {
-    const size_t BITS_PER_LONG = sizeof(unsigned long) * 8;
-    return (array[bit / BITS_PER_LONG] >> (bit % BITS_PER_LONG)) & 1UL;
-}
-
-static bool deviceSupportsAnyKeys(int fd, const std::vector<int>& keys) {
-    const size_t BITS_PER_LONG = sizeof(unsigned long) * 8;
-    unsigned long keybits[(KEY_MAX + BITS_PER_LONG) / BITS_PER_LONG];
-    memset(keybits, 0, sizeof(keybits));
-    if (ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keybits)), keybits) < 0) {
-        return false;
-    }
-    for (int k : keys) {
-        if (k >= 0 && k <= KEY_MAX && test_bit((size_t)k, keybits)) return true;
-    }
-    return false;
-}
 
 // Simplified device discovery: return all /dev/input/event* paths
 vector<string> findKeyboardDevices() {
@@ -71,8 +55,120 @@ vector<string> findKeyboardDevices() {
     return devices;
 }
 
+// Terminal input handler: polls stdin and maps typed commands to actions.
+void handleTerminalInput(Waydroid* w, std::atomic<bool>& keepRunning) {
+    struct pollfd pfd{STDIN_FILENO, POLLIN, 0};
+    std::string line;
+    // Show available terminal controls
+    std::cout << "Terminal controls:" << std::endl;
+    std::cout << "  [empty line] -> DPAD_CENTER" << std::endl;
+    std::cout << "  N -> Start Waydroid (Enter)" << std::endl;
+    std::cout << "  M -> Stop Waydroid (Backspace)" << std::endl;
+    std::cout << "  0-9 -> Change to mapped channel" << std::endl;
+    std::cout << "  W/A/S/D -> DPAD_UP/LEFT/DOWN/RIGHT" << std::endl;
+    std::cout << "  Q -> BACK" << std::endl;
+    std::cout << std::endl;
+    while (keepRunning) {
+        int pr = poll(&pfd, 1, 500);
+        if (pr < 0) {
+            perror("poll(stdin)");
+            break;
+        }
+        if (pr == 0) continue; // timeout
+        if (pfd.revents & POLLIN) {
+            if (!std::getline(std::cin, line)) {
+                // EOF or error
+                break;
+            }
+
+            if (line.empty()) {
+                // Enter with no input -> DPAD_CENTER
+                std::cout << "Terminal: DPAD_CENTER" << std::endl;
+                system("adb shell input keyevent KEYCODE_DPAD_CENTER");
+                continue;
+            }
+
+            // Normalize to uppercase for single-letter commands
+            if (line.size() == 1) {
+                char c = std::toupper(static_cast<unsigned char>(line[0]));
+                switch (c) {
+                    case 'N': // Enter
+                        if (w->isRunning() && w->isConnectedAdb()) {
+                            std::cout << "Waydroid is already running!" << std::endl;
+                        } else {
+                            std::cout << "Starting Waydroid..." << std::endl;
+                            w->start();
+                        }
+                        continue;
+                    case 'M': // Backspace -> stop
+                        if (!w->isRunning() && !w->isConnectedAdb()) {
+                            std::cout << "Waydroid is not running!" << std::endl;
+                        } else {
+                            std::cout << "Stopping Waydroid..." << std::endl;
+                            w->stop();
+                        }
+                        continue;
+                    case 'W':
+                        std::cout << "Terminal: DPAD_UP" << std::endl;
+                        system("adb shell input keyevent KEYCODE_DPAD_UP");
+                        continue;
+                    case 'A':
+                        std::cout << "Terminal: DPAD_LEFT" << std::endl;
+                        system("adb shell input keyevent KEYCODE_DPAD_LEFT");
+                        continue;
+                    case 'S':
+                        std::cout << "Terminal: DPAD_DOWN" << std::endl;
+                        system("adb shell input keyevent KEYCODE_DPAD_DOWN");
+                        continue;
+                    case 'D':
+                        std::cout << "Terminal: DPAD_RIGHT" << std::endl;
+                        system("adb shell input keyevent KEYCODE_DPAD_RIGHT");
+                        continue;
+                    case 'Q':
+                        std::cout << "Terminal: BACK" << std::endl;
+                        system("adb shell input keyevent KEYCODE_BACK");
+                        continue;
+                    case 'K':
+                        std::cout << "Terminal: ESC (stop)" << std::endl;
+                        keepRunning = false;
+                        continue;
+                    default:
+                        break;
+                }
+            }
+
+            // If the input is numeric (e.g. "1" or "0"), treat like numpad
+            bool allDigits = true;
+            for (char ch : line) if (!std::isdigit(static_cast<unsigned char>(ch))) { allDigits = false; break; }
+            if (allDigits && !line.empty()) {
+                int num = std::stoi(line);
+                if (num < 0 || num > 9) {
+                    std::cout << "Terminal: number out of 0-9 range" << std::endl;
+                    continue;
+                }
+                auto it = channelMap.find(num);
+                if (it != channelMap.end()) {
+                    if (!w->isRunning() || !w->isConnectedAdb()) {
+                        std::cout << "Cannot change channels - Waydroid is not running!" << std::endl;
+                        continue;
+                    }
+                    std::cout << "Terminal: Changing to channel " << num << std::endl;
+                    w->setChannel(it->second);
+                } else {
+                    std::cout << "Terminal: No channel mapped to " << num << std::endl;
+                }
+                continue;
+            }
+
+            // Unknown command
+            std::cout << "Terminal: unknown input '" << line << "'" << std::endl;
+        }
+    }
+}
+
 // Function to handle keyboard input from multiple devices
-void handleKeyboardInput(unique_ptr<Waydroid>& w, const vector<string>& devicePaths) {
+// keepRunning can be cleared to stop other input loops (terminal thread)
+void handleKeyboardInput(Waydroid* w, const vector<string>& devicePaths, std::atomic<bool>& keepRunning) {
     if (devicePaths.empty()) {
         cerr << "No keyboard devices found" << endl;
         return;
@@ -116,8 +212,8 @@ void handleKeyboardInput(unique_ptr<Waydroid>& w, const vector<string>& devicePa
     
     struct input_event ev;
     
-    while (true) {
-        int pr = poll(pfds.data(), pfds.size(), -1);
+    while (keepRunning) {
+        int pr = poll(pfds.data(), pfds.size(), 500);
         if (pr < 0) {
             perror("poll");
             break;
@@ -251,6 +347,8 @@ void handleKeyboardInput(unique_ptr<Waydroid>& w, const vector<string>& devicePa
                 
                 case KEY_ESC: // ESC to exit
                     cout << "Exiting..." << endl;
+                    // signal terminal thread to stop
+                    keepRunning = false;
                     // Release all and exit
                     for (int fd : fds) {
                         ioctl(fd, EVIOCGRAB, 0);
@@ -278,8 +376,13 @@ int main() {
         return 1;
     }
     
-    // Handle keyboard input from all
-    handleKeyboardInput(w, keyboardDevices);
+    // Start a terminal input thread and handle physical keyboard input
+    std::atomic<bool> keepRunning(true);
+    std::thread termThread(handleTerminalInput, w.get(), std::ref(keepRunning));
+    termThread.detach();
+
+    // Handle keyboard input from all (blocks until ESC pressed)
+    handleKeyboardInput(w.get(), keyboardDevices, keepRunning);
     
     return 0;
 }

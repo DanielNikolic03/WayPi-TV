@@ -43,8 +43,8 @@ int EON::channelToAlt(Channels ch) {
         case Channels::EON_PINK: return 3;
         case Channels::EON_PRVA: return 4;
         case Channels::EON_HAPPY: return 5;
-        case Channels::EON_BN: return 199;
-        case Channels::EON_BN_MUZIKA: return 222;
+        case Channels::EON_BN: return 200;
+        case Channels::EON_BN_MUZIKA: return 223;
         case Channels::EON_NATURE: return 335;
         default: return -1;
     }
