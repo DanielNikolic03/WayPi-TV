@@ -1,7 +1,6 @@
 #include "waydroid.h"
 #include <sys/select.h>
 #include <sys/time.h>
-// unistd.h likely already included through headers for usleep/STDIN_FILENO, but include explicitly for clarity
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
@@ -202,15 +201,26 @@ void Waydroid::setChannel(Channels ch) {
             svtPtr->start();
         }
         svtPtr->setChannel(ch);
-    } else if (appId == ChannelUtil::AppId::EON) {
-        EON* eonPtr = dynamic_cast<EON*>(runningApp.get());
-        if (!eonPtr) {
-            runningApp = std::make_unique<EON>();
-            eonPtr = static_cast<EON*>(runningApp.get());
-            eonPtr->start();
+    } else if (appId == ChannelUtil::AppId::MOVE) {
+        MOVE* movePtr = dynamic_cast<MOVE*>(runningApp.get());
+        if (!movePtr) {
+            runningApp = std::make_unique<MOVE>();
+            movePtr = static_cast<MOVE*>(runningApp.get());
+            movePtr->start();
         }
-        eonPtr->setChannel(ch);
-    } else {
+        movePtr->setChannel(ch);
+    }
+    // EON is currently not used, but code is left here for reference if needed in the future 
+    // else if (appId == ChannelUtil::AppId::EON) {
+    //     EON* eonPtr = dynamic_cast<EON*>(runningApp.get());
+    //     if (!eonPtr) {
+    //         runningApp = std::make_unique<EON>();
+    //         eonPtr = static_cast<EON*>(runningApp.get());
+    //         eonPtr->start();
+    //     }
+    //     eonPtr->setChannel(ch);
+    // } 
+    else {
         // Unknown channel: stop and reset app
         runningApp.reset();
     }
@@ -221,6 +231,7 @@ void Waydroid::setChannel(Channels ch) {
 Channels Waydroid::getChannel() {
     if (runningApp) {
         if (auto* svt = dynamic_cast<SVT*>(runningApp.get())) return svt->getChannel();
+        if (auto* move = dynamic_cast<MOVE*>(runningApp.get())) return move->getChannel();
         if (auto* eon = dynamic_cast<EON*>(runningApp.get())) return eon->getChannel();
     }
     return currentChannel; // fallback to last requested channel

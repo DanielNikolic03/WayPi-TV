@@ -11,12 +11,21 @@ enum class Channels {
     MOVE_PRVA,
     MOVE_HAPPY,
     MOVE_BN,
-    MOVE_BN_MUZIKA
+    MOVE_BN_MUZIKA,
+
+    // Old app, not used anymore but kept for reference
+    EON_RTS_1,
+    EON_PINK,
+    EON_PRVA,
+    EON_HAPPY,
+    EON_BN,
+    EON_BN_MUZIKA,
+    EON_NATURE
 };
 
 // Utilities to classify channels and map to owning app
 namespace ChannelUtil {
-    enum class AppId { SVT, MOVE, Unknown };
+    enum class AppId { SVT, MOVE, EON, Unknown };
 
     inline constexpr bool isSVT(Channels ch) {
         switch (ch) {

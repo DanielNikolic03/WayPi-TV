@@ -15,8 +15,6 @@ WayPi-TV/
 	├─ channels.h       # Channel enum + utilities
 	├─ App.h            # App base class
 	└─ Apps/
-		├─ SVT.cpp/.h   # SVT app integration
-		└─ EON.cpp/.h   # EON app integration
 ```
 
 ## Manual build and run (no sudo)
