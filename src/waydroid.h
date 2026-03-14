@@ -20,6 +20,7 @@
 #include "App.h"
 #include "Apps/SVT.h"
 #include "Apps/EON.h"
+#include "Apps/MOVE.h"
 
 class Waydroid {
 private:

@@ -10,7 +10,7 @@
 
 class MOVE : public App {
 private:
-    Channels currentChannel{Channels::};
+    Channels currentChannel{Channels::MOVE_RTS_1};
     bool running{false};
 
     int channelToAlt(Channels ch);

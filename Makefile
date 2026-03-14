@@ -15,13 +15,15 @@ TARGET = main
 SRCS = $(SRC_DIR)/main.cpp \
        $(SRC_DIR)/waydroid.cpp \
        $(APPS_DIR)/SVT.cpp \
-       $(APPS_DIR)/EON.cpp
+       $(APPS_DIR)/EON.cpp \
+	   $(APPS_DIR)/MOVE.cpp
 
 # Object files
 OBJS = $(OBJ_DIR)/main.o \
        $(OBJ_DIR)/waydroid.o \
        $(OBJ_DIR)/Apps/SVT.o \
-       $(OBJ_DIR)/Apps/EON.o
+       $(OBJ_DIR)/Apps/EON.o \
+	   $(OBJ_DIR)/Apps/MOVE.o
 
 # Default target
 all: $(TARGET)
@@ -47,6 +49,11 @@ $(OBJ_DIR)/Apps/SVT.o: $(APPS_DIR)/SVT.cpp $(APPS_DIR)/SVT.h $(SRC_DIR)/App.h $(
 
 # Compile Apps/EON.cpp
 $(OBJ_DIR)/Apps/EON.o: $(APPS_DIR)/EON.cpp $(APPS_DIR)/EON.h $(SRC_DIR)/App.h $(SRC_DIR)/channels.h
+	@mkdir -p $(OBJ_DIR)/Apps
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Compile Apps/MOVE.cpp
+$(OBJ_DIR)/Apps/MOVE.o: $(APPS_DIR)/MOVE.cpp $(APPS_DIR)/MOVE.h $(SRC_DIR)/App.h $(SRC_DIR)/channels.h
 	@mkdir -p $(OBJ_DIR)/Apps
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 

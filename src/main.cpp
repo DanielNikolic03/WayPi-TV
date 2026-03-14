@@ -27,12 +27,12 @@ std::map<int, Channels> channelMap = {
     {2, Channels::SVT2},
     {3, Channels::KUNSKAPSKANALEN},
     {4, Channels::SVT24},
-    {5, Channels::EON_BN_MUZIKA},
-    {6, Channels::EON_BN},
-    {7, Channels::EON_HAPPY},
-    {8, Channels::EON_PRVA},
-    {9, Channels::EON_PINK},
-    {0, Channels::EON_RTS_1}
+    {5, Channels::MOVE_BN_MUZIKA},
+    {6, Channels::MOVE_BN},
+    {7, Channels::MOVE_HAPPY},
+    {8, Channels::MOVE_PRVA},
+    {9, Channels::MOVE_PINK},
+    {0, Channels::MOVE_RTS_1}
 };
 
 // Simplified device discovery: return all /dev/input/event* paths
@@ -66,6 +66,8 @@ void handleTerminalInput(Waydroid* w, std::atomic<bool>& keepRunning) {
     std::cout << "  M -> Stop Waydroid (Backspace)" << std::endl;
     std::cout << "  0-9 -> Change to mapped channel" << std::endl;
     std::cout << "  W/A/S/D -> DPAD_UP/LEFT/DOWN/RIGHT" << std::endl;
+    std::cout << "  K -> ESC (stop)" << std::endl;
+    std::cout << "  T -> Test functionality" << std::endl;
     std::cout << "  Q -> BACK" << std::endl;
     std::cout << std::endl;
     while (keepRunning) {
@@ -131,6 +133,10 @@ void handleTerminalInput(Waydroid* w, std::atomic<bool>& keepRunning) {
                     case 'K':
                         std::cout << "Terminal: ESC (stop)" << std::endl;
                         keepRunning = false;
+                        continue;
+                    case 'T':
+                        std::cout << "Terminal: Test functionality" << std::endl;
+                        w->setChannel(Channels::MOVE_RTS_1);
                         continue;
                     default:
                         break;
